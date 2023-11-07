@@ -63,6 +63,46 @@ async function run() {
     };
 
 
+    // update one book
+    try {
+      app.put('/books/:id', async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const updateBook = req.body;
+        if (updateBook.totalQuantity !== undefined) {
+          const quantity = updateBook.totalQuantity;
+          console.log(quantity);
+
+          const update = {
+            $set: {
+              quantity: quantity
+            }
+          };
+
+          const result = await booksCollection.updateOne(filter, update);
+          res.send(result)
+        } else {
+          const book = {
+            $set: {
+              book_name: updateBook.book_name,
+              author_name: updateBook.author_name,
+              book_category: updateBook.book_category,
+              quantity: updateBook.quantity,
+              rating: updateBook.rating,
+              image: updateBook.image,
+              details: updateBook.details
+            }
+          }
+          const result = await booksCollection.updateOne(filter, book)
+          res.send(result);
+        }
+      })
+
+    } catch (error) {
+      console.log(error);
+    }
+
+
     try {
       app.post('/borrowBooks', async (req, res) => {
         const borrowBooks = req.body;
@@ -88,8 +128,8 @@ async function run() {
     try {
       app.get('/borrowBooks/:id', async (req, res) => {
         const id = req.params.id;
-        const query = {_id : new ObjectId(id)}
-        const result  = await borrowBookCollection.findOne(query);
+        const query = { _id: new ObjectId(id) }
+        const result = await borrowBookCollection.findOne(query);
         res.send(result);
       })
     } catch (error) {
@@ -99,8 +139,8 @@ async function run() {
     try {
       app.delete('/borrowBooks/:id', async (req, res) => {
         const id = req.params.id;
-        const query = {_id : new ObjectId(id)}
-        const result  = await borrowBookCollection.deleteOne(query);
+        const query = { _id: new ObjectId(id) }
+        const result = await borrowBookCollection.deleteOne(query);
         res.send(result);
       })
     } catch (error) {
