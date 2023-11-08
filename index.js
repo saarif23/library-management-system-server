@@ -12,8 +12,8 @@ app.use(cors({
     'http://localhost:5174',
     'https://library-management-syste-28a46.web.app',
     'library-management-syste-28a46.firebaseapp.com',
-    'https://654b84fe1318870ec57f3fbb--iridescent-croissant-76b1d3.netlify.app'
 
+    'https://iridescent-croissant-76b1d3.netlify.app'
 
   ],
   credentials: true
@@ -37,11 +37,11 @@ const verifyToken = async (req, res, next) => {
   const token = req?.cookies?.token;
   console.log("toker", token);
   if (!token) {
-    return  res.status(401).send({ message: "unauthorized access 401" })
+    return res.status(401).send({ message: "unauthorized access 401" })
   }
   jwt.verify(token, process.env.ACCESS_USER_TOKEN, (error, decoded) => {
     if (error) {
-      return  res.status(401).send({ message: "unauthorized access" })
+      return res.status(401).send({ message: "unauthorized access" })
     }
     req.user = decoded;
     next();
@@ -238,20 +238,35 @@ async function run() {
     ////
 
     try {
-      app.get('/borrowBooks',  async (req, res) => {
-        console.log('owner token', req.user)
-        // if (req.user.email !== req.query.email) {
-        //   return res.status(403).send({ message: "forbidden" })
-        // }
+      app.get('/borrowBooks', async (req, res) => {
+        // console.log(req.query?.email);
         let query = {};
         if (req.query?.email) {
           query = { email: req.query.email }
+          console.log(query);
         }
-        const result = await borrowBookCollection.find(query).toArray()
-        res.send(result)
-
-
+        const result = await borrowBookCollection.find(query).toArray();
+        res.send(result);
       })
+    } catch (error) {
+      console.log(error);
+    }
+
+    try {
+      // app.get('/borrowBooks', async (req, res) => {
+      //   // console.log('owner token', req.user)
+      //   // if (req.user.email !== req.query.email) {
+      //   //   return res.status(403).send({ message: "forbidden" })
+      //   // }
+      //   let query = {};
+      //   if (req?.query?.email) {
+      //     query = { email: req.query.email }
+      //   }
+      //   const result = await borrowBookCollection.find(query).toArray()
+      //   res.send(result)
+
+
+      // })
     } catch (error) {
       console.log(error)
 
