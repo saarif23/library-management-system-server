@@ -2,7 +2,9 @@ const express = require('express')
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
+const cookieParser = require('cookie-parser')
 const port = process.env.PORT || 5000
 
 app.use(cors({
@@ -14,6 +16,22 @@ app.use(express.json())
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
+app.use(cookieParser());
+
+//varify the access token
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies.token;
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" })
+  }
+  jwt.verify(token, process.env.ACCESS_USER_TOKEN, (error, decoded) => {
+    if (error) {
+      return res.status(401).send({ message: "unauthorized access" })
+    }
+    req.user = decoded;
+    next();
+  })
+}
 
 const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.DB_PASS}@cluster0.jrzn18f.mongodb.net/?retryWrites=true&w=majority`
 
@@ -32,6 +50,44 @@ async function run() {
     const bookCategoryCollection = client.db("booksDB").collection("category")
     const booksCollection = client.db('booksDB').collection('books')
     const borrowBookCollection = client.db('booksDB').collection('borrowBooks')
+    //
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      console.log("user in  post api ", user);
+      const token = jwt.sign(user, process.env.ACCESS_USER_TOKEN, { expiresIn: "1h" })
+      res
+        .cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production" ? true : false,
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+
+        })
+        .send({ success: true })
+    })
+
+    try {
+      app.post('/logout', (req, res) => {
+        const user = req.body;
+        console.log('delete post ', user)
+        res.clearCookie('token', { maxAge: 0 },).send({ success: true })
+      })
+    } catch (error) {
+      console.log(error);
+    }
+
+    try {
+      app.post("/books", async (req, res) => {
+        const newBook = req.body
+        const result = await booksCollection.insertOne(newBook)
+        res.send(result)
+      })
+    } catch (error) {
+      console.log(error);
+    }
+
+
+
+
     try {
       app.get('/category', async (req, res) => {
         const cursor = bookCategoryCollection.find();
@@ -59,11 +115,62 @@ async function run() {
         res.send(result);
       })
     } catch (error) {
-      console.lo; g(error)
+      console.log(error)
     };
+
+    // get by book name
+    // try {
+    //   app.get('/books', async (req, res) => {
+    //     const query = {};
+    //     if (req.body.book_name) {
+    //       query = { book_name: req.query.book_name }
+    //     }
+    //     const result = await cursor.toArray();
+    //     res.send(result);
+    //   })
+    // } catch (error) {
+    //   console.log(error)
+    // };
 
 
     // update one book
+    try {
+      app.get('/updateBooks', async (req, res) => {
+
+        const cursor = booksCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
+
+      })
+    } catch (error) {
+      console.log(error);
+    }
+
+
+    try {
+      app.get('/updateBooks/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) }
+        const result = await booksCollection.findOne(query)
+        res.send(result);
+
+      })
+    } catch (error) {
+      console.log(error);
+    }
+    try {
+      app.put('/updateBooks/:id', async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) }
+        console.log(id, filter);
+      })
+    } catch (error) {
+      console.log(error);
+
+    }
+
+
+
     try {
       app.put('/books/:id', async (req, res) => {
         const id = req.params.id;
@@ -113,11 +220,19 @@ async function run() {
     } catch (error) {
       console.log(error)
     }
+    ////
 
     try {
       app.get('/borrowBooks', async (req, res) => {
-        const cursor = borrowBookCollection.find();
-        const result = await cursor.toArray();
+        // if (req.user.email !== req.query.email) {
+        //   return res.status(403).send({ message: "forbidden" })
+        // }
+        let query = {};
+        if (req.query?.email) {
+          query = { email: req.query.email }
+        }
+
+        const result = await borrowBookCollection.find(query).toArray();
         res.send(result)
       })
     } catch (error) {
@@ -125,6 +240,8 @@ async function run() {
 
     }
 
+
+    //
     try {
       app.get('/borrowBooks/:id', async (req, res) => {
         const id = req.params.id;
@@ -139,13 +256,27 @@ async function run() {
     try {
       app.delete('/borrowBooks/:id', async (req, res) => {
         const id = req.params.id;
-        const query = { _id: new ObjectId(id) }
+        const query = { _id: (id) }
         const result = await borrowBookCollection.deleteOne(query);
         res.send(result);
       })
     } catch (error) {
       console.log(error)
     };
+    // try {
+    //   app.delete('/borrowBooks', async (req, res) => {
+    //     let query = {};
+    //     if (req.query.email) {
+    //       query = { email: req.query.email }
+    //     }
+
+    //     const result = await borrowBookCollection.deleteMany(query);
+    //     res.send(result);
+    //   })
+    // } catch (error) {
+    //   console.log(error)
+    // };
+
 
 
 
