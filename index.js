@@ -241,8 +241,8 @@ async function run() {
       app.get('/borrowBooks', async (req, res) => {
         // console.log(req.query?.email);
         let query = {};
-        if (req.query?.email) {
-          query = { email: req.query.email }
+        if (req?.query?.email) {
+          query = { email: req?.query?.email }
           console.log(query);
         }
         const result = await borrowBookCollection.find(query).toArray();
@@ -250,26 +250,6 @@ async function run() {
       })
     } catch (error) {
       console.log(error);
-    }
-
-    try {
-      // app.get('/borrowBooks', async (req, res) => {
-      //   // console.log('owner token', req.user)
-      //   // if (req.user.email !== req.query.email) {
-      //   //   return res.status(403).send({ message: "forbidden" })
-      //   // }
-      //   let query = {};
-      //   if (req?.query?.email) {
-      //     query = { email: req.query.email }
-      //   }
-      //   const result = await borrowBookCollection.find(query).toArray()
-      //   res.send(result)
-
-
-      // })
-    } catch (error) {
-      console.log(error)
-
     }
 
 
