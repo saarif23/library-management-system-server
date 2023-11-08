@@ -8,7 +8,14 @@ const cookieParser = require('cookie-parser')
 const port = process.env.PORT || 5000
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: ['http://localhost:5173',
+    'http://localhost:5174',
+    'https://library-management-syste-28a46.web.app',
+    'library-management-syste-28a46.firebaseapp.com',
+    'https://654b84fe1318870ec57f3fbb--iridescent-croissant-76b1d3.netlify.app'
+
+
+  ],
   credentials: true
 }));
 app.use(express.json())
@@ -18,15 +25,23 @@ app.get('/', (req, res) => {
 })
 app.use(cookieParser());
 
+
+const logger = async (req, res, next) => {
+  console.log("logger info :", req.method, req.url)
+  next()
+}
+
+
 //varify the access token
 const verifyToken = async (req, res, next) => {
-  const token = req.cookies.token;
+  const token = req?.cookies?.token;
+  console.log("toker", token);
   if (!token) {
-    return res.status(401).send({ message: "unauthorized access" })
+    return  res.status(401).send({ message: "unauthorized access 401" })
   }
   jwt.verify(token, process.env.ACCESS_USER_TOKEN, (error, decoded) => {
     if (error) {
-      return res.status(401).send({ message: "unauthorized access" })
+      return  res.status(401).send({ message: "unauthorized access" })
     }
     req.user = decoded;
     next();
@@ -223,7 +238,8 @@ async function run() {
     ////
 
     try {
-      app.get('/borrowBooks', async (req, res) => {
+      app.get('/borrowBooks',  async (req, res) => {
+        console.log('owner token', req.user)
         // if (req.user.email !== req.query.email) {
         //   return res.status(403).send({ message: "forbidden" })
         // }
@@ -231,9 +247,10 @@ async function run() {
         if (req.query?.email) {
           query = { email: req.query.email }
         }
-
-        const result = await borrowBookCollection.find(query).toArray();
+        const result = await borrowBookCollection.find(query).toArray()
         res.send(result)
+
+
       })
     } catch (error) {
       console.log(error)
