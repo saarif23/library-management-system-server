@@ -15,12 +15,7 @@ const port = process.env.PORT || 5000
 //cors origin 
 app.use(cors({
   origin: ['http://localhost:5173',
-    'http://localhost:5174',
-    'https://library-management-syste-28a46.web.app',
-    'library-management-syste-28a46.firebaseapp.com',
-    'https://iridescent-croissant-76b1d3.netlify.app'
-
-
+  'https://bespoke-piroshki-ccd535.netlify.app'
   ],
   credentials: true
 }));
@@ -132,7 +127,7 @@ async function run() {
 
     // get all boooks
     try {
-      app.get('/books', verifyToken, async (req, res) => {
+      app.get('/books', async (req, res) => {
         const cursor = booksCollection.find();
         const result = await cursor.toArray();
         res.send(result);
